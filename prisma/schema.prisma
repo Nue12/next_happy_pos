@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model addon_categories {
+  id                     Int                      @id @default(autoincrement())
+  name                   String
+  is_required            Boolean?                 @default(false)
+  addons                 addons[]
+  menus_addon_categories menus_addon_categories[]
+  is_archived Boolean @default(false)
+}
+
+model addons {
+  id                  Int              @id @default(autoincrement())
+  name                String
+  price               Int
+  is_available        Boolean?         @default(true)
+  addon_category_id Int
+  addon_categories    addon_categories @relation(fields: [addon_category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  is_archived Boolean @default(false)
+}
+
+model companies {
+  id        Int         @id @default(autoincrement())
+  name      String
+  address   String      @default("Default address")
+  locations locations[]
+  users     users[]
+  is_archived Boolean @default(false)
+}
+
+model locations {
+  id                              Int                               @id @default(autoincrement())
+  name                            String
+  address                         String?
+  company_id                    Int
+  companies                       companies                         @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tables                          tables[]
+  menus_menu_categories_locations menus_menu_categories_locations[]
+  is_archived Boolean @default(false)
+}
+
+model menu_categories {
+  id                              Int                               @id @default(autoincrement())
+  name                            String
+  menus_menu_categories_locations menus_menu_categories_locations[]
+  is_archived Boolean @default(false)
+}
+
+model tables {
+  id           Int       @id @default(autoincrement())
+  name         String
+  asset_url    String?
+  location_id Int
+  locations    locations @relation(fields: [location_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  is_archived Boolean @default(false)
+}
+
+model menus {
+  id                              Int                               @id @default(autoincrement())
+  name                            String
+  price                           Int
+  asset_url                       String?
+  description                     String?
+  menus_addon_categories          menus_addon_categories[]
+  menus_menu_categories_locations menus_menu_categories_locations[]
+  is_archived Boolean @default(false)
+}
+
+model menus_addon_categories {
+  id                  Int               @id @default(autoincrement())
+  menu_id            Int?
+  addon_category_id Int?
+  addon_categories    addon_categories? @relation(fields: [addon_category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  menus               menus?            @relation(fields: [menu_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model menus_menu_categories_locations {
+  id                 Int             @id @default(autoincrement())
+  menu_id           Int?
+  location_id       Int?
+  menu_category_id Int
+  is_available       Boolean?        @default(true)
+  locations          locations?       @relation(fields: [location_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  menus              menus?           @relation(fields: [menu_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  menu_categories    menu_categories @relation(fields: [menu_category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+   @@unique([menu_id, menu_category_id, location_id], name: "unique_menus_menu_categories_locations_ids")
+}
+
+model users {
+  id           Int        @id @default(autoincrement())
+  name         String
+  email        String
+  password     String
+  company_id Int?
+  companies    companies? @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  role         Role
+}
+
+enum Role {
+  user
+  admin
+}
+
